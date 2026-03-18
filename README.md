@@ -2,7 +2,7 @@
 
 AI-Powered Mental Health Monitoring System
 
-Our app -
+**Our app -**
 https://preview.builtwithrocket.new/neurosense-5w75u15 . 
 
 ---
@@ -71,7 +71,7 @@ Displays graphs, trends, and a daily mental health score.
 
 ---
 
-🔀 Flow Chart
+**🔀 Flow Chart**
 
 ![WhatsApp Image 2026-03-18 at 10 29 46 PM](https://github.com/user-attachments/assets/68ca6a9e-5a3f-4179-a855-a38766077f04)
 
@@ -79,14 +79,14 @@ Displays graphs, trends, and a daily mental health score.
 ---
 
 
-🎯 Impact
+**🎯 Impact**
 
 NeuroSense transforms passive tracking into proactive mental health management, enabling early intervention and improved well-being.
 
 
 ---
 
-🔮 Future Scope
+**🔮 Future Scope**
 
 NeuroSense can evolve with multiple advanced features:
 
@@ -141,7 +141,7 @@ Voice-based interaction
 
 ---
 
-📊 Scalability Details
+**📊 Scalability Details**
 
 1. ⚙️ Technical Scalability
 
@@ -224,7 +224,7 @@ Data anonymization
 
 ---
 
-✅ Conclusion
+**✅ Conclusion**
 
 NeuroSense is a scalable, AI-driven platform that bridges the gap between technology and mental health. By combining real-time monitoring, predictive analytics, and personalized interventions, it has the potential to revolutionize preventive healthcare and mental wellness globally.
 
