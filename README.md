@@ -230,13 +230,13 @@ NeuroSense is a scalable, AI-driven platform that bridges the gap between techno
 
 ---
 
-👨‍💻 Author
+## **👨‍💻 Author**
 
-Bitan Roy
+### **Bitan Roy**
 
-Sudipta Karmakar
+### **Sudipta Karmakar**
 
-Shraddha Debnath
+### **Shraddha Debnath**
 
 
 
