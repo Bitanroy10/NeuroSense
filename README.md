@@ -1,4 +1,4 @@
-🧠 NeuroSense
+**🧠 NeuroSense**
 
 AI-Powered Mental Health Monitoring System
 
@@ -7,14 +7,14 @@ https://preview.builtwithrocket.new/neurosense-5w75u15 .
 
 ---
 
-📌 Overview
+**📌 Overview**
 
 NeuroSense is a smart health monitoring system designed to detect and analyze mental and neurological conditions using wearable sensors and smartphone behavioral data. It combines AI, real-time analytics, and personalized recommendations to improve overall mental well-being.
 
 
 ---
 
-❗ Problem & Solution Explanation
+**❗ Problem & Solution Explanation**
 
 🚨 Problem Statement
 
