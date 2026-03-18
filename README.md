@@ -36,11 +36,11 @@ Most existing health apps track only fitness or basic wellness metrics, failing 
 
 ---
 
-💡 Proposed Solution: NeuroSense
+**💡 Proposed Solution: NeuroSense**
 
 NeuroSense provides an AI-powered, real-time mental health monitoring system that integrates wearable sensor data and smartphone behavioral analytics.
 
-🔑 Key Features
+**🔑 Key Features**
 
 Continuous Monitoring
 Real-time data collection from wearables (HR, HRV, sleep) and smartphone sensors (usage, mobility, voice tone).
