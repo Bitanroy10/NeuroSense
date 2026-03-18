@@ -238,9 +238,7 @@ Sudipta Karmakar
 
 Shraddha Debnath
 
----
 
-![WhatsApp Image 2026-03-18 at 10 29 46 PM](https://github.com/user-attachments/assets/68ca6a9e-5a3f-4179-a855-a38766077f04)
 
 
 
