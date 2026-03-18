@@ -1,4 +1,4 @@
-**🧠 NeuroSense**
+# **🧠 NeuroSense**
 
 AI-Powered Mental Health Monitoring System
 
