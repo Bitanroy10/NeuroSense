@@ -1,98 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neurosense | Advanced Neural & Sensor Technology</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Font Awesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NeuroSense</title>
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="container nav-container">
-            <a href="#" class="logo"><i class="fa-solid fa-brain"></i> NeuroSense</a>
-            <ul class="nav-links">
-                <li><a href="#home">Home</a></li>
-                <li><a href="#objectives">Objectives</a></li>
-                <li><a href="#features">Technology</a></li>
-                <li><a href="#contact">Contact</a></li>
-            </ul>
-            <div class="hamburger">
-                <i class="fa-solid fa-bars"></i>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Hero Section -->
-    <header id="home" class="hero">
-        <div class="container hero-content">
-            <h1>Sensing the Future of Intelligence</h1>
-            <p>Neurosense bridges the gap between human cognition and advanced sensor technology. We provide cutting-edge biometric and neurological data solutions for a smarter tomorrow.</p>
-            <div class="hero-buttons">
-                <a href="#objectives" class="btn btn-primary">Our Objectives</a>
-                <a href="#contact" class="btn btn-secondary">Get a Demo</a>
-            </div>
-        </div>
-    </header>
-
-    <!-- Objectives Section -->
-    <section id="objectives" class="section">
-        <div class="container">
-            <h2 class="section-title">Our Objectives</h2>
-            <div class="grid-3">
-                <div class="card">
-                    <i class="fa-solid fa-chart-line card-icon"></i>
-                    <h3>Predictive Analytics</h3>
-                    <p>Harnessing neurological and sensor data to predict outcomes in real-time, improving decision-making in healthcare and industrial applications.</p>
-                </div>
-                <div class="card">
-                    <i class="fa-solid fa-shield-halved card-icon"></i>
-                    <h3>Non-Invasive Monitoring</h3>
-                    <p>Developing state-of-the-art, low-cost wearable sensors that capture high-fidelity data without compromising user comfort or privacy.</p>
-                </div>
-                <div class="card">
-                    <i class="fa-solid fa-microchip card-icon"></i>
-                    <h3>Seamless Integration</h3>
-                    <p>Providing APIs and edge-computing solutions to seamlessly integrate human-centric data into existing smart systems and IoT frameworks.</p>
-                </div>
-            </div>
-        </div>
+  <div id="phone">
+    <section id="auth" class="screen"></section>
+    <section id="app" class="screen hidden">
+      <main id="view"></main>
+      <nav id="tabs">
+        <button data-tab="dashboard">▦<span>Dashboard</span></button>
+        <button data-tab="insights">⌁<span>Insights</span></button>
+        <button data-tab="profile">☺<span>Profile</span></button>
+      </nav>
     </section>
-
-    <!-- Features Section -->
-    <section id="features" class="section bg-light">
-        <div class="container">
-            <h2 class="section-title">Why Choose Neurosense?</h2>
-            <div class="features-content">
-                <div class="feature-text">
-                    <ul>
-                        <li><strong><i class="fa-solid fa-check text-primary"></i> High-Fidelity Data:</strong> Advanced noise-cancellation algorithms for pure signal processing.</li>
-                        <li><strong><i class="fa-solid fa-check text-primary"></i> Real-Time Processing:</strong> Millisecond latency for critical health and industrial monitoring.</li>
-                        <li><strong><i class="fa-solid fa-check text-primary"></i> Scalable Architecture:</strong> Built to handle thousands of concurrent sensor streams globally.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer / Contact -->
-    <footer id="contact" class="footer">
-        <div class="container">
-            <h2>Ready to transform your data?</h2>
-            <p>Contact us to learn how Neurosense can integrate into your workflow.</p>
-            <form id="contactForm" class="contact-form">
-                <input type="text" id="name" placeholder="Your Name" required>
-                <input type="email" id="email" placeholder="Your Email" required>
-                <button type="submit" class="btn btn-primary">Send Message</button>
-            </form>
-            <div class="footer-bottom">
-                <p>&copy; 2026 Neurosense Inc. (Demo). Built with HTML/CSS/JS.</p>
-            </div>
-        </div>
-    </footer>
-
-    <script src="script.js"></script>
+  </div>
+  <dialog id="dlg"></dialog>
+  <div id="breathe" class="hidden"></div>
+  <div id="toasts"></div>
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>
