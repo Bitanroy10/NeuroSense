@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#dbe7f5">
+  <title>NeuroSense</title>
+  <style>.hidden{display:none!important}body{margin:0;font-family:system-ui,sans-serif}</style>
+  <script>
+    // Shows a clear message if CSS/JS files are missing from the deployment
+    function loadFail(u){var f=function(){document.body.insertAdjacentHTML('afterbegin','<div style="position:fixed;z-index:999;top:0;left:0;right:0;padding:14px;background:#fde8e8;color:#9b1c1c;font:15px system-ui">Could not load <b>'+u+'</b>. Make sure the <code>public/css</code> and <code>public/js</code> folders are in your GitHub repo, then redeploy.</div>')};document.body?f():addEventListener('DOMContentLoaded',f)}
+  </script>
+  <style>
+:root { --ink:#1d2433; --mute:#6f7a8e; --green:#5f9140; --blue:#2f5d8c; --sky:#4a7aa8; --red:#c0504d; --orange:#e08a4a; --line:rgba(30,40,70,.09);
+  --ease:cubic-bezier(.2,.8,.2,1); --spring:cubic-bezier(.34,1.56,.64,1); }
+* { box-sizing:border-box; margin:0; }
+html { scroll-behavior:smooth; -webkit-tap-highlight-color:transparent; }
+body { min-height:100vh; overflow:hidden; font-family:system-ui,-apple-system,'Segoe UI',sans-serif; color:var(--ink);
+  background:linear-gradient(120deg,#d9e6f6,#ece4f8 40%,#dcf0e8 75%,#f6ead8); background-size:300% 300%; animation:bgShift 22s ease infinite; }
+@keyframes bgShift { 50% { background-position:100% 50%; } }
+
+/* animated background blobs that drift and follow the cursor */
+.blobs { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+.blobs i { position:absolute; border-radius:50%; filter:blur(70px); opacity:.55; animation:float 16s ease-in-out infinite; transition:translate .8s var(--ease); }
+.blobs i:nth-child(1) { width:420px; height:420px; background:#7fb2e5; left:-80px; top:-60px; translate:calc(var(--mx,0)*40px) calc(var(--my,0)*40px); }
+.blobs i:nth-child(2) { width:360px; height:360px; background:#b9a2e8; right:-60px; top:30%; animation-delay:-5s; translate:calc(var(--mx,0)*-50px) calc(var(--my,0)*30px); }
+.blobs i:nth-child(3) { width:380px; height:380px; background:#8fd3b4; left:25%; bottom:-120px; animation-delay:-9s; translate:calc(var(--mx,0)*30px) calc(var(--my,0)*-50px); }
+@keyframes float { 50% { transform:translate(30px,-40px) scale(1.1); } }
+
+#phone { position:relative; z-index:1; width:100%; max-width:420px; height:100dvh; margin:0 auto; background:rgba(247,248,253,.72); backdrop-filter:blur(18px) saturate(1.2); }
+@media (min-width:480px) { #phone { height:min(880px,calc(100dvh - 40px)); margin:20px auto; border-radius:34px; overflow:hidden; box-shadow:0 30px 80px rgba(40,60,110,.25), inset 0 0 0 1px rgba(255,255,255,.7); } }
+.screen { height:100%; } #app { display:flex; flex-direction:column; } #auth { overflow-y:auto; padding:28px 22px; }
+#view { flex:1; overflow-y:auto; overscroll-behavior:contain; padding:16px 16px 24px; scroll-behavior:smooth; }
+#view::-webkit-scrollbar, #auth::-webkit-scrollbar { width:6px; } #view::-webkit-scrollbar-thumb { background:rgba(47,93,140,.25); border-radius:6px; }
+
+h1 { font-size:22px; } h2 { font-size:17px; margin:18px 0 10px; }
+.top { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.chip { font-size:12px; color:var(--mute); } .sync { text-align:center; font-size:12px; color:var(--green); margin-bottom:10px; }
+.row { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.muted { color:var(--mute); font-size:13px; }
+
+/* entrance animation: children rise in one after another */
+#view:not(.still) > *, #auth > * { animation:rise .7s var(--ease) backwards; animation-delay:calc(var(--i,0)*70ms); }
+@keyframes rise { from { opacity:0; transform:translateY(22px) scale(.98); } }
+
+/* cards with a cursor spotlight */
+.card { position:relative; overflow:hidden; background:rgba(255,255,255,.88); border-radius:18px; padding:16px; margin-bottom:14px; box-shadow:0 4px 18px rgba(30,40,70,.07); transition:transform .35s var(--ease), box-shadow .35s var(--ease); }
+.card:hover { transform:translateY(-3px); box-shadow:0 14px 34px rgba(30,40,70,.13); }
+.card::after { content:""; position:absolute; inset:0; pointer-events:none; opacity:0; transition:opacity .3s; background:radial-gradient(200px circle at var(--px,50%) var(--py,50%), rgba(74,122,168,.14), transparent 70%); }
+.card:hover::after { opacity:1; }
+
+.badge { font-size:11px; font-weight:700; padding:3px 9px; border-radius:10px; background:#f3e3e3; color:var(--red); }
+.badge.good, .badge.LOW { background:#e1eed8; color:var(--green); } .badge.MEDIUM { background:#f6e8c8; color:#a97a10; } .badge.HIGH { background:#f3dada; color:var(--red); }
+.pulse { animation:pulse 1.6s infinite; } @keyframes pulse { 0% { box-shadow:0 0 0 0 rgba(192,80,77,.45); } 100% { box-shadow:0 0 0 10px rgba(192,80,77,0); } }
+.beat { display:inline-block; color:var(--red); animation:beat 1.3s ease-in-out infinite; }
+@keyframes beat { 0%,100% { transform:scale(1); } 15% { transform:scale(1.28); } 30% { transform:scale(1); } 45% { transform:scale(1.18); } }
+
+.ring { display:block; margin:8px auto; filter:drop-shadow(0 6px 10px rgba(47,93,140,.12)); } .ring text { text-anchor:middle; }
+.note { background:linear-gradient(135deg,#f8f1e4,#f3eadb); border-radius:10px; padding:10px; font-size:13px; margin-top:8px; }
+.big { font-size:34px; font-weight:700; } .emoji { font-size:42px; display:inline-block; animation:bob 3.5s ease-in-out infinite; }
+@keyframes bob { 50% { transform:translateY(-6px) rotate(-3deg); } }
+.bar { height:8px; border-radius:6px; background:#e7e9f0; overflow:hidden; margin-top:6px; } .bar i { display:block; height:100%; border-radius:6px; animation:grow 1.1s var(--ease) backwards; }
+@keyframes grow { from { width:0; } }
+.pred { margin-bottom:12px; font-size:14px; }
+.stats { display:flex; justify-content:space-around; text-align:center; margin:10px 0; } .stats b { font-size:24px; } .stats small { display:block; color:var(--mute); }
+
+.insight { border-radius:14px; padding:12px; margin-bottom:10px; background:#fbf6e9; border:1px solid #f0e4c3; cursor:pointer; transition:transform .3s var(--ease), box-shadow .3s var(--ease); }
+.insight:hover { transform:translate(2px,-3px); box-shadow:0 10px 22px rgba(120,90,20,.14); } .insight:active { transform:scale(.98); }
+.insight.HIGH { background:#fbeeee; border-color:#f2d3d3; } .insight p { font-size:13px; color:#555; margin-top:4px; }
+.sugg { display:flex; gap:12px; } .sugg .ic { font-size:22px; } .sugg p { font-size:13px; color:var(--mute); margin-top:3px; }
+
+/* chart animations */
+svg text { fill:var(--mute); font-size:10px; }
+.arc { animation:draw 1.4s var(--ease) backwards; } @keyframes draw { from { stroke-dasharray:0 400; } }
+.ln { stroke-dasharray:1; animation:line 1.6s var(--ease) backwards; } @keyframes line { from { stroke-dashoffset:1; } }
+.fillarea { animation:fade 1.4s .4s ease backwards; } @keyframes fade { from { opacity:0; } }
+.bx { transform-box:fill-box; transform-origin:bottom; animation:pop .8s var(--ease) backwards; animation-delay:calc(var(--k,0)*70ms); } @keyframes pop { from { transform:scaleY(0); } }
+#view.still .arc, #view.still .ln, #view.still .fillarea, #view.still .bx, #view.still .bar i { animation:none; }
+
+/* buttons: magnetic, glowing, ripple */
+.btn { position:relative; overflow:hidden; width:100%; border:0; border-radius:12px; padding:13px; font-size:15px; font-weight:600; font-family:inherit; color:#fff; cursor:pointer; margin-top:10px;
+  --sh:47,93,140; background:linear-gradient(135deg,#2f5d8c,#4a7aa8,#2f5d8c); background-size:200% 100%; box-shadow:0 6px 16px rgba(var(--sh),.28);
+  transform:translate(var(--tx,0px),var(--ty,0px)); transition:transform .25s var(--ease), box-shadow .25s var(--ease), background-position .5s var(--ease), filter .2s; }
+.btn:hover { transform:translate(var(--tx,0px),calc(var(--ty,0px) - 2px)); box-shadow:0 12px 26px rgba(var(--sh),.36); background-position:100% 0; filter:brightness(1.06); }
+.btn:active { transform:translate(var(--tx,0px),var(--ty,0px)) scale(.97); transition-duration:.08s; }
+.btn:focus-visible, #tabs button:focus-visible { outline:3px solid rgba(74,122,168,.45); outline-offset:2px; }
+.btn.green { --sh:95,145,64; background-image:linear-gradient(135deg,#5a8b3f,#86b25f,#5a8b3f); } .btn.orange { --sh:224,138,74; background-image:linear-gradient(135deg,#e08a4a,#f2ad70,#e08a4a); }
+.btn.sky { --sh:74,122,168; background-image:linear-gradient(135deg,#4a7aa8,#72a3cf,#4a7aa8); } .btn.red { --sh:192,80,77; background-image:linear-gradient(135deg,#c0504d,#dc7471,#c0504d); }
+.btn.ghost { background:rgba(255,255,255,.92); color:var(--ink); border:1px solid var(--line); box-shadow:0 2px 8px rgba(30,40,70,.05); }
+.btn:disabled { opacity:.6; pointer-events:none; }
+.ripple { position:absolute; border-radius:50%; background:currentColor; opacity:.28; pointer-events:none; transform:scale(0); animation:rip .65s ease-out forwards; }
+@keyframes rip { to { transform:scale(1); opacity:0; } }
+
+/* bottom tabs with sliding indicator */
+#tabs { position:relative; display:flex; background:rgba(255,255,255,.88); border-top:1px solid var(--line); backdrop-filter:blur(10px); }
+#tabs button { position:relative; overflow:hidden; flex:1; border:0; background:none; padding:10px 0 8px; font-size:20px; color:var(--mute); cursor:pointer; transition:color .3s, transform .35s var(--spring); }
+#tabs button:hover { color:var(--sky); } #tabs button:active { transform:scale(.9); }
+#tabs .on { color:var(--blue); font-weight:700; transform:translateY(-2px); } #tabs span { display:block; font-size:11px; }
+#ind { position:absolute; top:0; left:0; width:33.333%; height:3px; border-radius:0 0 4px 4px; background:linear-gradient(90deg,#4a7aa8,#5f9140); transition:transform .5s cubic-bezier(.65,0,.35,1); }
+
+/* auth */
+.logo { text-align:center; font-size:30px; letter-spacing:2px; margin-bottom:26px; } .logo em { display:block; font-style:normal; animation:bob 4s ease-in-out infinite; } .logo b { display:block; font-size:42px; background:linear-gradient(90deg,#2f5d8c,#6b5bd0,#5f9140); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.field { display:flex; align-items:center; gap:8px; border:1px solid var(--line); border-radius:12px; padding:11px 12px; margin:10px 0; background:rgba(255,255,255,.9); transition:border-color .25s, box-shadow .25s, transform .25s var(--ease); }
+.field:focus-within { border-color:var(--sky); box-shadow:0 0 0 4px rgba(74,122,168,.16); transform:translateY(-1px); }
+.field input { border:0; outline:0; flex:1; font-size:15px; background:none; font-family:inherit; } .field button { border:0; background:none; cursor:pointer; position:relative; overflow:hidden; transition:transform .2s var(--spring); } .field button:hover { transform:scale(1.2); }
+.divider { text-align:center; color:var(--mute); font-size:12px; margin:14px 0; }
+.link { color:var(--blue); font-size:13px; text-align:right; cursor:pointer; margin:4px 0 14px; transition:opacity .2s; } .link:hover { opacity:.7; text-decoration:underline; }
+.device { display:flex; align-items:center; gap:14px; } .device .pic { font-size:34px; }
+
+/* dialog, toasts, breathing */
+#dlg { border:0; border-radius:20px; padding:22px; width:min(360px,92vw); box-shadow:0 30px 70px rgba(20,30,60,.35); } #dlg[open] { animation:dpop .4s var(--spring); } @keyframes dpop { from { opacity:0; transform:scale(.88) translateY(20px); } }
+#dlg::backdrop { background:rgba(20,30,60,.38); backdrop-filter:blur(5px); animation:fade .3s; } #dlg input[type=range] { width:100%; accent-color:var(--sky); } #dlg input[type=time] { width:100%; padding:10px; font-size:16px; }
+#toasts { position:fixed; top:14px; left:50%; transform:translateX(-50%); z-index:400; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+.toast { background:rgba(29,36,51,.95); color:#fff; padding:11px 18px; border-radius:12px; font-size:14px; box-shadow:0 10px 30px rgba(0,0,0,.25); animation:tin .45s var(--spring), tout .4s 2.8s ease forwards; }
+@keyframes tin { from { opacity:0; transform:translateY(-16px) scale(.9); } } @keyframes tout { to { opacity:0; transform:translateY(-10px); } }
+#breathe { position:fixed; inset:0; z-index:50; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:26px; background:radial-gradient(circle at 50% 40%,#f2f8ff,#d5e5f5 70%); animation:fade .5s; }
+#breathe .orb { width:140px; height:140px; border-radius:50%; background:radial-gradient(circle at 35% 30%,#8fb9e0,#2f5d8c); box-shadow:0 0 70px rgba(47,93,140,.5); transition:transform 4s ease-in-out; } #breathe .orb.in { transform:scale(1.7); }
+
+/* cursor follower */
+#cur, #dot { position:fixed; left:0; top:0; pointer-events:none; z-index:300; }
+#cur i { position:absolute; width:36px; height:36px; margin:-18px 0 0 -18px; border:1.5px solid rgba(47,93,140,.55); border-radius:50%; opacity:0; transition:width .3s var(--ease), height .3s var(--ease), margin .3s var(--ease), background .3s, opacity .3s, border-color .3s, transform .2s; }
+#cur.on i { opacity:1; } #cur.hot i { width:60px; height:60px; margin:-30px 0 0 -30px; background:rgba(74,122,168,.14); border-color:rgba(74,122,168,.9); } #cur.down i { transform:scale(.7); }
+#dot { width:7px; height:7px; margin:-3.5px 0 0 -3.5px; border-radius:50%; background:var(--blue); }
+
+@media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; } }
+
+</style>
+</head>
+<body>
+  <div class="blobs"><i></i><i></i><i></i></div>
+  <div id="phone">
+    <section id="auth" class="screen"></section>
+    <section id="app" class="screen hidden">
+      <main id="view"></main>
+      <nav id="tabs">
+        <i id="ind"></i>
+        <button data-tab="dashboard">▦<span>Dashboard</span></button>
+        <button data-tab="insights">⌁<span>Insights</span></button>
+        <button data-tab="profile">☺<span>Profile</span></button>
+      </nav>
+    </section>
+  </div>
+  <dialog id="dlg"></dialog>
+  <div id="breathe" class="hidden"></div>
+  <div id="toasts"></div>
+  <script type="module">
+const __m_api = (() => {
+// FRONTEND: API client
+let token = localStorage.getItem('ns_token');
+const setToken = t => { token = t; t ? localStorage.setItem('ns_token', t) : localStorage.removeItem('ns_token'); };
+const getToken = () => token;
+async function api(path, method = 'GET', body) {
+  const r = await fetch('/api' + path, {
+    method, body: body ? JSON.stringify(body) : undefined,
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) }
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) { if (r.status === 401 && token) setToken(null); throw new Error(d.error || 'Request failed'); }
+  return d;
+}
+
+return {setToken, getToken, api};
+})();
+const __m_charts = (() => {
+// FRONTEND: tiny dependency-free SVG charts
+function ring(value, text, sub, color) {
+  const r = 52, c = 2 * Math.PI * r, v = value == null ? 0 : value, num = parseFloat(text);
+  const cnt = isNaN(num) ? '' : `data-count="${num}" data-suf="${String(text).replace(/[\d.]/g, '')}"`;
+  return `<svg class="ring" width="150" height="150" viewBox="0 0 150 150">
+    <circle cx="75" cy="75" r="${r}" fill="none" stroke="#efece6" stroke-width="12"/>
+    <circle class="arc" cx="75" cy="75" r="${r}" fill="none" stroke="${color}" stroke-width="12" stroke-linecap="round"
+      stroke-dasharray="${(c * v / 100).toFixed(1)} ${c}" transform="rotate(-90 75 75)"/>
+    <text x="75" y="80" ${cnt} style="font-size:34px;font-weight:700;fill:#1d2433">${text}</text>
+    <text x="75" y="100" style="font-size:13px">${sub}</text></svg>`;
+}
+function area(vals, labels, { min = 0, max = 10, color = '#e08a4a' } = {}) {
+  const W = 320, H = 150, L = 26, B = 22, T = 8, n = vals.length;
+  const x = i => L + (n < 2 ? 0 : i * (W - L - 6) / (n - 1)), y = v => T + (H - T - B) * (1 - (v - min) / (max - min));
+  const pts = vals.map((v, i) => v == null ? null : [x(i), y(v)]).filter(Boolean);
+  if (!pts.length) return '<p class="muted">No data yet</p>';
+  const line = pts.map(p => p.join(',')).join(' ');
+  const grid = [0, .5, 1].map(f => { const v = min + (max - min) * f; return `<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="#eee"/><text x="2" y="${y(v) + 3}">${Math.round(v)}</text>`; }).join('');
+  const labs = labels.map((l, i) => (n <= 8 || i % Math.ceil(n / 6) === 0) ? `<text x="${x(i)}" y="${H - 6}" text-anchor="middle">${l}</text>` : '').join('');
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%">${grid}
+    <polygon class="fillarea" points="${pts[0][0]},${y(min)} ${line} ${pts.at(-1)[0]},${y(min)}" fill="${color}" opacity=".15"/>
+    <polyline class="ln" pathLength="1" points="${line}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round"/>${labs}</svg>`;
+}
+function bars(vals, labels, max = 10) {
+  const W = 320, H = 150, L = 26, B = 22, n = vals.length, bw = (W - L) / n;
+  const col = v => v >= 7 ? '#6b9a4b' : v >= 6 ? '#d9a566' : '#c0504d';
+  const b = vals.map((v, i) => v == null ? '' : `<rect class="bx" style="--k:${i}" x="${L + i * bw + 5}" y="${8 + (H - 8 - B) * (1 - v / max)}" width="${bw - 10}" height="${(H - 8 - B) * v / max}" rx="3" fill="${col(v)}"/>`).join('');
+  const labs = labels.map((l, i) => `<text x="${L + i * bw + bw / 2}" y="${H - 6}" text-anchor="middle">${l}</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%">${b}${labs}</svg>`;
+}
+
+return {ring, area, bars};
+})();
+const __m_fx = (() => {
+// FRONTEND: motion effects (cursor follower, magnetic buttons, ripples, staggered entrances, count-up numbers)
+const $ = s => document.querySelector(s);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const fine = matchMedia('(pointer: fine)').matches;
+
+function stagger(root) { [...root.children].forEach((c, i) => c.style.setProperty('--i', Math.min(i, 10))); }
+
+function countUp(root) {
+  if (reduce) return;
+  root.querySelectorAll('[data-count]').forEach(el => {
+    const to = parseFloat(el.dataset.count), suf = el.dataset.suf || '', dec = (el.dataset.count.split('.')[1] || '').length, t0 = performance.now();
+    const step = t => { const p = Math.min(1, (t - t0) / 1100), e = 1 - Math.pow(1 - p, 3); el.textContent = (to * e).toFixed(dec) + suf; if (p < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  });
+}
+function paint(fresh) {
+  const v = $('#view'); stagger(v);
+  if (fresh) { v.scrollTo({ top: 0, behavior: 'instant' }); countUp(v); }
+}
+
+function initFx() {
+  // ripple on click
+  document.addEventListener('pointerdown', e => {
+    const b = e.target.closest?.('.btn,#tabs button,.field button'); if (!b || reduce) return;
+    const r = b.getBoundingClientRect(), s = Math.max(r.width, r.height) * 2, i = document.createElement('i');
+    i.className = 'ripple'; i.style.cssText = `width:${s}px;height:${s}px;left:${e.clientX - r.left - s / 2}px;top:${e.clientY - r.top - s / 2}px`;
+    b.append(i); setTimeout(() => i.remove(), 700);
+  });
+  if (!fine || reduce) return;
+
+  const root = document.documentElement, cur = document.createElement('div'), dot = document.createElement('div');
+  cur.id = 'cur'; cur.innerHTML = '<i></i>'; dot.id = 'dot'; document.body.append(cur, dot);
+  let x = innerWidth / 2, y = innerHeight / 2, cx = x, cy = y, lastBtn = null;
+
+  addEventListener('pointermove', e => {
+    x = e.clientX; y = e.clientY;
+    dot.style.transform = `translate3d(${x}px,${y}px,0)`;
+    root.style.setProperty('--mx', (x / innerWidth - .5).toFixed(3)); root.style.setProperty('--my', (y / innerHeight - .5).toFixed(3));
+    cur.classList.add('on');
+    const t = e.target, card = t.closest?.('.card');
+    if (card) { const r = card.getBoundingClientRect(); card.style.setProperty('--px', x - r.left + 'px'); card.style.setProperty('--py', y - r.top + 'px'); }
+    cur.classList.toggle('hot', !!t.closest?.('button,a,.insight,.link,summary,input,label.field'));
+    const b = t.closest?.('.btn');                       // magnetic pull toward the pointer
+    if (lastBtn && lastBtn !== b) { lastBtn.style.setProperty('--tx', '0px'); lastBtn.style.setProperty('--ty', '0px'); }
+    if (b) { const r = b.getBoundingClientRect(); b.style.setProperty('--tx', ((x - r.left) / r.width - .5) * 10 + 'px'); b.style.setProperty('--ty', ((y - r.top) / r.height - .5) * 5 + 'px'); }
+    lastBtn = b;
+  }, { passive: true });
+  addEventListener('pointerdown', () => cur.classList.add('down'));
+  addEventListener('pointerup', () => cur.classList.remove('down'));
+  root.addEventListener('mouseleave', () => cur.classList.remove('on'));
+  (function loop() { cx += (x - cx) * .16; cy += (y - cy) * .16; cur.style.transform = `translate3d(${cx}px,${cy}px,0)`; requestAnimationFrame(loop); })();
+}
+
+return {stagger, paint, initFx};
+})();
+const __m_devices = (() => {
+// FRONTEND: wearable connection + live data pushing
+const { api } = __m_api;
+const DEVICES = [
+  { name: 'Fitbit Charge 5', icon: '⌚' }, { name: 'Samsung Galaxy Watch', icon: '⌚' },
+  { name: 'Noise Pro', icon: '⌚' }, { name: 'Apple Watch', icon: '⌚' }
+];
+let timer = null, hr = 70, bleHr = null, bleRR = [];
+
+// Real heart-rate sensor via Web Bluetooth (Chrome/Edge/Android; standard BLE Heart Rate profile)
+async function connectBle() {
+  if (!navigator.bluetooth) throw new Error('Web Bluetooth not supported in this browser');
+  const dev = await navigator.bluetooth.requestDevice({ filters: [{ services: ['heart_rate'] }] });
+  const svc = await (await dev.gatt.connect()).getPrimaryService('heart_rate');
+  const ch = await svc.getCharacteristic('heart_rate_measurement');
+  ch.addEventListener('characteristicvaluechanged', e => {
+    const v = e.target.value, f = v.getUint8(0);
+    bleHr = f & 1 ? v.getUint16(1, true) : v.getUint8(1);
+    if (f & 16) { bleRR = []; for (let i = f & 1 ? 3 : 2; i + 1 < v.byteLength; i += 2) bleRR.push(v.getUint16(i, true) / 1024 * 1000); }
+  });
+  await ch.startNotifications();
+  return dev.name || 'Bluetooth HR Sensor';
+}
+const rmssd = rr => rr.length < 2 ? null : Math.sqrt(rr.slice(1).reduce((s, x, i) => s + (x - rr[i]) ** 2, 0) / (rr.length - 1));
+
+function startLive(onUpdate) {
+  stopLive();
+  timer = setInterval(async () => {
+    let hrv;
+    if (bleHr) { hr = bleHr; hrv = rmssd(bleRR) || Math.max(20, 100 - hr * 0.7); }
+    else { hr = Math.min(130, Math.max(55, hr + (Math.random() - 0.5) * 6)); hrv = Math.max(20, 70 - (hr - 60) * 0.8 + Math.random() * 8); }
+    try { await api('/readings', 'POST', { hr: Math.round(hr), hrv: Math.round(hrv), activeMin: hr > 85 ? 30 / 60 : 0 }); onUpdate?.(); } catch {}
+  }, 30000);
+}
+const stopLive = () => { clearInterval(timer); timer = null; };
+
+return {DEVICES, connectBle, startLive, stopLive};
+})();
+const __m_app = (() => {
+// FRONTEND: screens, navigation, actions
+const { api, setToken, getToken } = __m_api;
+const { ring, area, bars } = __m_charts;
+const { DEVICES, connectBle, startLive, stopLive } = __m_devices;
+const { initFx, stagger, paint } = __m_fx;
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const ago = t => { const m = Math.max(0, Math.round((Date.now() - t) / 6e4)); return m < 1 ? 'just now' : m < 60 ? m + 'm ago' : Math.round(m / 60) + 'h ago'; };
+const day = t => new Date(t).toLocaleDateString([], { weekday: 'short' });
+const hour = t => new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+const emoji = s => s >= 8 ? '😄' : s >= 6.5 ? '😊' : s >= 5 ? '😐' : s >= 3 ? '😕' : '😞';
+const arrow = p => (p >= 0 ? '↑ ' : '↓ ') + Math.abs(p) + '%';
+const stressColor = v => v >= 67 ? '#c0504d' : v >= 34 ? '#c49a6c' : '#6b9a4b';
+
+let me = null, tab = 'dashboard', refreshTimer = null, shown = null;
+function fresh(t) { const f = shown !== t; shown = t; $('#view').classList.toggle('still', !f); return f; }
+function moveInd(t) { const i = ['dashboard', 'insights', 'profile'].indexOf(t); if (i >= 0) $('#ind').style.transform = `translateX(${i * 100}%)`; }
+
+function toast(msg) {
+  const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg;
+  $('#toasts').append(el); setTimeout(() => el.remove(), 3200);
+}
+const fail = e => toast(e.message || 'Something went wrong');
+
+// ================= AUTH =================
+let mode = 'login';
+function showAuth() {
+  stopLive(); clearInterval(refreshTimer);
+  $('#app').classList.add('hidden'); $('#auth').classList.remove('hidden');
+  const reg = mode === 'register', bio = localStorage.getItem('ns_bio');
+  $('#auth').innerHTML = `
+    <div class="logo"><em>🧠</em><b>NeuroSense</b></div>
+    <h1>${reg ? 'Create Account' : 'Welcome Back'}</h1><p class="muted" style="margin:6px 0 16px">${reg ? 'Start your wellness journey' : 'Sign in to continue your wellness journey'}</p>
+    ${!reg ? `<button class="btn ghost" id="bio">☝ Sign in with Fingerprint</button><div class="divider">or continue with</div>` : ''}
+    <form id="form">
+      ${reg ? `<label class="field">👤<input id="name" placeholder="Name" autocomplete="name"></label>` : ''}
+      <label class="field">✉<input id="email" type="email" placeholder="Email" value="${reg ? '' : 'demo@neurosense.com'}" required autocomplete="email"></label>
+      <label class="field">🔒<input id="pw" type="password" placeholder="Password" required minlength="6" autocomplete="${reg ? 'new-password' : 'current-password'}"><button type="button" id="eye">👁</button></label>
+      ${!reg ? `<div class="link" id="forgot">Forgot Password?</div>` : ''}
+      <button class="btn" id="submit">${reg ? 'Create account' : 'Sign in'}</button>
+    </form>
+    <div class="divider">or</div>
+    <button class="btn ghost" data-p="google">G &nbsp;Continue with Google</button>
+    <button class="btn ghost" data-p="apple"> &nbsp;Continue with Apple</button>
+    <p class="divider" style="margin-top:18px">${reg ? 'Have an account?' : 'New here?'} <a class="link" id="switch">${reg ? 'Sign in' : 'Create account'}</a></p>`;
+  stagger($('#auth'));
+  $('#eye').onclick = () => { const p = $('#pw'); p.type = p.type === 'password' ? 'text' : 'password'; };
+  $('#switch').onclick = () => { mode = reg ? 'login' : 'register'; showAuth(); };
+  if ($('#forgot')) $('#forgot').onclick = () => toast('Password reset needs an email service. See README.');
+  $('#form').onsubmit = async e => {
+    e.preventDefault(); $('#submit').disabled = true;
+    try {
+      const d = await api(reg ? '/auth/register' : '/auth/login', 'POST',
+        { email: $('#email').value, password: $('#pw').value, name: reg ? $('#name').value : undefined });
+      setToken(d.token); await enter(d.user);
+    } catch (x) { fail(x); } finally { const b = $('#submit'); if (b) b.disabled = false; }
+  };
+  document.querySelectorAll('[data-p]').forEach(b => b.onclick = async () => {
+    try { const d = await api('/auth/social', 'POST', { provider: b.dataset.p }); setToken(d.token); await enter(d.user); } catch (x) { fail(x); }
+  });
+  if ($('#bio')) $('#bio').onclick = bioLogin;
+}
+
+// Fingerprint / Face unlock using WebAuthn platform authenticator (device-level gate for the saved session)
+const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function bioEnroll() {
+  try {
+    if (!window.PublicKeyCredential) throw new Error('Biometrics not supported here');
+    const cred = await navigator.credentials.create({ publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)), rp: { name: 'NeuroSense' },
+      user: { id: crypto.getRandomValues(new Uint8Array(16)), name: me.email, displayName: me.name },
+      pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+      authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' } } });
+    localStorage.setItem('ns_bio', JSON.stringify({ id: b64(cred.rawId), token: getToken() }));
+    toast('Fingerprint login enabled'); renderProfile();
+  } catch (e) { fail(e); }
+}
+async function bioLogin() {
+  const saved = JSON.parse(localStorage.getItem('ns_bio') || 'null');
+  if (!saved) return toast('Sign in once, then enable fingerprint in Profile');
+  try {
+    await navigator.credentials.get({ publicKey: { challenge: crypto.getRandomValues(new Uint8Array(32)),
+      allowCredentials: [{ type: 'public-key', id: unb64(saved.id) }], userVerification: 'required' } });
+    setToken(saved.token); await boot();
+  } catch (e) { fail(e); }
+}
+
+async function enter(user) {
+  me = user; shown = null; $('#auth').classList.add('hidden'); $('#app').classList.remove('hidden');
+  go(user.devices.length ? 'dashboard' : 'devices');
+  if (user.devices.length) startLive(() => ['dashboard', 'insights'].includes(tab) && render(true));
+  clearInterval(refreshTimer); refreshTimer = setInterval(() => ['dashboard', 'insights'].includes(tab) && render(true), 30000);
+}
+
+// ================= NAV =================
+function go(t) {
+  tab = t; $('#tabs').classList.toggle('hidden', t === 'devices'); moveInd(t);
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  render();
+}
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => go(b.dataset.tab));
+const render = () => ({ dashboard: renderDashboard, insights: renderInsights, profile: renderProfile, devices: renderDevices })[tab]();
+
+// ================= DASHBOARD =================
+async function renderDashboard() {
+  let d; try { d = await api('/dashboard'); } catch (e) { return fail(e); }
+  if (tab !== 'dashboard') return;
+  const s = d.stress, dev = me.devices[0];
+  $('#view').innerHTML = `
+    <div class="top"><h1>Dashboard</h1><span class="chip">${dev ? '● ' + esc(dev) : 'No device'}</span></div>
+    ${d.syncedAt ? `<div class="sync">✔ Synced ${ago(d.syncedAt)}</div>` : `<div class="card"><b>No device connected</b><p class="muted">Connect a wearable to see live stress, heart rate and sleep.</p><button class="btn" id="goDev">Connect Device</button></div>`}
+    <div class="card"><div class="row"><b><span class="beat">♥</span> Stress Level</b>${s.value != null ? `<span class="badge">${s.rising ? '↗ Rising' : '↘ Falling'}</span>` : ''}</div>
+      ${ring(s.value, s.value ?? '--', s.label, s.value != null ? stressColor(s.value) : '#ccc')}
+      <div class="note">${esc(s.message)}</div></div>
+    <div class="card"><div class="row"><b>◎ Mood Score</b><span class="muted">${d.mood ? ago(d.mood.t) : ''}</span></div>
+      ${d.mood ? `<div class="row" style="margin:10px 0"><span class="emoji">${emoji(d.mood.score)}</span><span class="big" style="color:var(--green)"><span data-count="${d.mood.score}">${d.mood.score}</span><small class="muted"> out of 10</small></span></div>
+      <div class="bar"><i style="width:${d.mood.score * 10}%;background:var(--green)"></i></div>` : '<p class="muted">No mood logged yet.</p>'}
+      <button class="btn ghost" id="logMood">◉ Log Today's Mood</button></div>
+    ${d.heart ? `<div class="card"><div class="row"><b><span class="beat">♥</span> Heart Rate</b><span class="badge pulse">● Live</span></div><div class="muted">24-hour timeline</div>
+      <div class="stats"><div><b style="color:var(--red)" data-count="${d.heart.current}">${d.heart.current}</b><small>Current bpm</small></div><div><b data-count="${d.heart.resting}">${d.heart.resting}</b><small>Resting bpm</small></div><div><b data-count="${d.heart.max}">${d.heart.max}</b><small>Max today</small></div></div>
+      ${area(d.heart.series.map(p => p.hr), d.heart.series.map(p => hour(p.t)), { min: 40, max: 160, color: '#b05a5a' })}</div>` : ''}
+    ${d.sleep ? `<div class="card"><div class="row"><b>☾ Sleep Quality</b><span class="badge good">${d.sleep.quality >= 80 ? 'Good' : 'Fair'}</span></div>
+      <p class="big"><span data-count="${d.sleep.hours}">${d.sleep.hours}</span><small class="muted"> hours</small></p><div class="bar"><i style="width:${d.sleep.quality}%;background:var(--blue)"></i></div>
+      <button class="btn ghost" id="logSleep">Log sleep hours</button></div>` : ''}
+    <div class="row"><h2>AI Insights</h2></div>
+    ${d.insights.length ? d.insights.map((i, n) => `<div class="insight ${i.priority}" data-a="${i.type}"><div class="row"><b>${esc(i.title)}</b><span class="badge ${i.priority}">${i.priority}</span></div><p>${esc(i.text)}</p><p style="text-align:right;color:var(--blue)">Take Action →</p></div>`).join('') : '<p class="muted">No alerts right now. Nice work.</p>'}`;
+  if ($('#goDev')) $('#goDev').onclick = () => go('devices');
+  $('#logMood').onclick = logMood;
+  if ($('#logSleep')) $('#logSleep').onclick = logSleep;
+  document.querySelectorAll('.insight').forEach(el => el.onclick = () => act(el.dataset.a));
+  paint(fresh('dashboard'));
+}
+
+function ask(html, onOk) {
+  const dlg = $('#dlg'); dlg.innerHTML = html + `<button class="btn" id="ok">Save</button><button class="btn ghost" id="cancel">Cancel</button>`;
+  dlg.showModal(); $('#cancel').onclick = () => dlg.close();
+  $('#ok').onclick = async () => { try { await onOk(); dlg.close(); } catch (e) { fail(e); } };
+}
+function logMood() {
+  ask(`<h2 style="margin-top:0">How are you feeling?</h2><div class="row"><span class="emoji" id="em">😊</span><b class="big" id="mv">7</b></div><input type="range" id="mood" min="0" max="10" step="0.5" value="7">`, async () => {
+    await api('/mood', 'POST', { score: +$('#mood').value }); toast('Mood logged'); render();
+  });
+  $('#mood').oninput = e => { $('#mv').textContent = e.target.value; $('#em').textContent = emoji(+e.target.value); };
+}
+function logSleep() {
+  ask(`<h2 style="margin-top:0">Hours slept last night</h2><input type="range" id="sl" min="2" max="12" step="0.5" value="7"><p class="big" id="sv">7</p>`, async () => {
+    await api('/sleep', 'POST', { hours: +$('#sl').value }); toast('Sleep logged'); render();
+  });
+  $('#sl').oninput = e => $('#sv').textContent = e.target.value;
+}
+
+// ================= INSIGHTS =================
+const ICON = { break: '⏸', breathing: '≋', bedtime: '☾', hydrate: '💧' };
+const BTN = { break: ['green', '🔔 Set Reminder'], breathing: ['', '▶ Start Exercise'], bedtime: ['orange', '🕒 Set Bedtime'], hydrate: ['sky', '🔔 Set Reminder'] };
+async function renderInsights() {
+  let d; try { d = await api('/insights'); } catch (e) { return fail(e); }
+  if (tab !== 'insights') return;
+  const w = d.weekly, labels = w.days.map(day), b = d.burnout.value;
+  $('#view').innerHTML = `
+    <div class="top"><h1>Health Insights</h1><span class="chip">${d.syncedAt ? '⟳ ' + ago(d.syncedAt) : ''}</span></div>
+    <h2 style="margin-top:6px">Predictive Analytics</h2>
+    <div class="card"><details open><summary class="row" style="cursor:pointer"><span><b>🔥 Burnout Risk Assessment</b><br><span class="muted">${d.burnout.label}</span></span></summary>
+      ${ring(b, b + '%', 'Risk', stressColor(b))}
+      <b>24-Hour Predictions</b><div style="margin-top:10px">
+      ${d.predictions.map(p => `<div class="pred"><div class="row"><span>${p.name}</span><b data-count="${p.value}" data-suf="%">${p.value}%</b></div><div class="bar"><i style="width:${p.value}%;background:${stressColor(p.value)}"></i></div></div>`).join('')}</div></details></div>
+    <h2>Weekly Trends</h2>
+    <div class="card"><div class="row"><span><b>Stress Pattern Analysis</b><br><span class="muted">Weekly average: ${w.stressAvg}/10</span></span><span class="badge">${arrow(w.stressChange)}</span></div>${area(w.stress, labels)}</div>
+    <div class="card"><div class="row"><span><b>Sleep Insights</b><br><span class="muted">Average: ${w.sleepAvg} hours</span></span><span class="badge ${w.sleepChange < 0 ? '' : 'good'}">${arrow(w.sleepChange)}</span></div>${bars(w.sleep, labels, 10)}</div>
+    <h2>Personalized Suggestions</h2>
+    ${d.suggestions.map(s => `<div class="card"><div class="sugg"><span class="ic">${ICON[s.type]}</span><div><b>${esc(s.title)}</b><p>${esc(s.text)}</p></div></div>
+      <button class="btn ${BTN[s.type][0]}" data-a="${s.type}">${BTN[s.type][1]}</button></div>`).join('')}`;
+  document.querySelectorAll('button[data-a]').forEach(b => b.onclick = () => act(b.dataset.a));
+  paint(fresh('insights'));
+}
+
+// ================= ACTIONS: reminders, bedtime, breathing =================
+async function notify(text) {
+  toast('⏰ ' + text);
+  if ('Notification' in window && Notification.permission === 'granted') new Notification('NeuroSense', { body: text });
+}
+async function remind(type, text, minutes) {
+  if ('Notification' in window && Notification.permission === 'default') await Notification.requestPermission();
+  await api('/reminders', 'POST', { type, at: new Date(Date.now() + minutes * 6e4).toISOString() });
+  setTimeout(() => notify(text), minutes * 6e4);
+  toast(`Reminder set for ${minutes} min from now`);
+}
+function act(type) {
+  if (type === 'break') remind('break', 'Time for a 5-minute break', 30).catch(fail);
+  else if (type === 'hydrate') remind('hydrate', 'Drink some water 💧', 30).catch(fail);
+  else if (type === 'breathing') breathing();
+  else if (type === 'bedtime') ask(`<h2 style="margin-top:0">Bedtime reminder</h2><input type="time" id="bt" value="22:30">`, async () => {
+    const [h, m] = $('#bt').value.split(':'), t = new Date(); t.setHours(h, m, 0, 0); if (t < Date.now()) t.setDate(t.getDate() + 1);
+    await remind('bedtime', 'Time to wind down for bed 🌙', Math.round((t - Date.now()) / 6e4));
+  });
+}
+function breathing() {
+  const el = $('#breathe'); el.classList.remove('hidden');
+  el.innerHTML = `<h1>Breathe</h1><div class="orb" id="orb"></div><h2 id="bt2">Inhale…</h2><p class="muted" id="left">2:00</p><button class="btn ghost" style="width:160px" id="stop">Stop</button>`;
+  let sec = 120, inh = true; const orb = $('#orb');
+  const flip = () => { inh = !inh; orb.classList.toggle('in', !inh); $('#bt2').textContent = inh ? 'Inhale…' : 'Exhale…'; };
+  setTimeout(() => orb.classList.add('in'), 50); $('#bt2').textContent = 'Inhale…'; inh = false; // first inhale already running
+  const breath = setInterval(flip, 4000);
+  const tick = setInterval(() => { sec--; $('#left').textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`; if (sec <= 0) end(true); }, 1000);
+  const end = done => { clearInterval(breath); clearInterval(tick); el.classList.add('hidden'); if (done) toast('Nice work. Exercise complete 🌿'); };
+  $('#stop').onclick = () => end(false);
+}
+
+// ================= DEVICES =================
+function renderDevices() {
+  $('#view').innerHTML = `
+    <div class="top"><b>Connect Devices</b><a class="link" id="skip" style="margin:0">Skip</a></div>
+    <div class="card" style="background:#dbe6f2"><b>Enhance Health Monitoring</b><p class="muted">Connect your wearable for accurate stress tracking, sleep analysis and AI insights. Your data stays safe and private.</p></div>
+    <div class="muted" style="margin:10px 0">Supported Devices</div>
+    ${DEVICES.map(d => { const on = me.devices.includes(d.name); return `<div class="card"><div class="device"><span class="pic">${d.icon}</span><b>${d.name}</b></div>
+      <button class="btn ${on ? 'ghost' : ''}" data-d="${d.name}">${on ? '✔ Connected (tap to disconnect)' : '🔗 Connect Device'}</button></div>`; }).join('')}
+    <div class="card"><b>Bluetooth heart-rate sensor</b><p class="muted">Use any BLE heart-rate strap/band for real readings (Chrome / Edge).</p><button class="btn sky" id="ble">Pair via Bluetooth</button></div>`;
+  paint(fresh('devices'));
+  $('#skip').onclick = () => go('dashboard');
+  document.querySelectorAll('[data-d]').forEach(b => b.onclick = async () => {
+    const name = b.dataset.d, on = me.devices.includes(name);
+    try { const r = await api(`/devices/${on ? 'disconnect' : 'connect'}`, 'POST', { name }); me.devices = r.devices;
+      me.devices.length ? startLive(() => ['dashboard', 'insights'].includes(tab) && render()) : stopLive();
+      toast(on ? name + ' disconnected' : name + ' connected'); on ? renderDevices() : go('dashboard'); } catch (e) { fail(e); }
+  });
+  $('#ble').onclick = async () => {
+    try { const name = await connectBle(); me.devices = (await api('/devices/connect', 'POST', { name })).devices;
+      startLive(() => ['dashboard', 'insights'].includes(tab) && render()); toast(name + ' paired'); go('dashboard'); } catch (e) { fail(e); }
+  };
+}
+
+// ================= PROFILE =================
+function renderProfile() {
+  const bio = !!localStorage.getItem('ns_bio');
+  $('#view').innerHTML = `<div class="top"><h1>Profile</h1></div>
+    <div class="card"><div class="emoji">🙂</div><h2 style="margin:6px 0">${esc(me.name)}</h2><p class="muted">${esc(me.email)}</p></div>
+    <div class="card"><b>Devices</b><p class="muted" style="margin:6px 0">${me.devices.length ? me.devices.map(esc).join(', ') : 'None connected'}</p><button class="btn ghost" id="mng">Manage devices</button></div>
+    <div class="card"><b>Security & alerts</b>
+      <button class="btn ghost" id="bioBtn">${bio ? '☝ Disable fingerprint login' : '☝ Enable fingerprint login'}</button>
+      <button class="btn ghost" id="notif">🔔 Enable notifications</button></div>
+    <button class="btn red" id="out">Sign out</button>`;
+  paint(fresh('profile'));
+  $('#mng').onclick = () => go('devices');
+  $('#bioBtn').onclick = () => bio ? (localStorage.removeItem('ns_bio'), toast('Fingerprint login disabled'), renderProfile()) : bioEnroll();
+  $('#notif').onclick = async () => toast('Notifications: ' + (('Notification' in window) ? await Notification.requestPermission() : 'unsupported'));
+  $('#out').onclick = () => { setToken(null); me = null; mode = 'login'; showAuth(); };
+}
+
+// ================= BOOT =================
+async function boot() {
+  if (!getToken()) return showAuth();
+  try { enter((await api('/me')).user); } catch { showAuth(); }
+}
+initFx();
+boot();
+
+
+})();
+</script>
+</body>
+</html>
