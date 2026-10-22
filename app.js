@@ -2,6 +2,7 @@
 import { api, setToken, getToken } from './api.js';
 import { ring, area, bars } from './charts.js';
 import { DEVICES, connectBle, startLive, stopLive } from './devices.js';
+import { initFx, stagger, paint } from './fx.js';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -12,7 +13,9 @@ const emoji = s => s >= 8 ? '😄' : s >= 6.5 ? '😊' : s >= 5 ? '😐' : s >= 
 const arrow = p => (p >= 0 ? '↑ ' : '↓ ') + Math.abs(p) + '%';
 const stressColor = v => v >= 67 ? '#c0504d' : v >= 34 ? '#c49a6c' : '#6b9a4b';
 
-let me = null, tab = 'dashboard', refreshTimer = null;
+let me = null, tab = 'dashboard', refreshTimer = null, shown = null;
+function fresh(t) { const f = shown !== t; shown = t; $('#view').classList.toggle('still', !f); return f; }
+function moveInd(t) { const i = ['dashboard', 'insights', 'profile'].indexOf(t); if (i >= 0) $('#ind').style.transform = `translateX(${i * 100}%)`; }
 
 function toast(msg) {
   const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg;
@@ -27,7 +30,7 @@ function showAuth() {
   $('#app').classList.add('hidden'); $('#auth').classList.remove('hidden');
   const reg = mode === 'register', bio = localStorage.getItem('ns_bio');
   $('#auth').innerHTML = `
-    <div class="logo">🧠<b>NeuroSense</b></div>
+    <div class="logo"><em>🧠</em><b>NeuroSense</b></div>
     <h1>${reg ? 'Create Account' : 'Welcome Back'}</h1><p class="muted" style="margin:6px 0 16px">${reg ? 'Start your wellness journey' : 'Sign in to continue your wellness journey'}</p>
     ${!reg ? `<button class="btn ghost" id="bio">☝ Sign in with Fingerprint</button><div class="divider">or continue with</div>` : ''}
     <form id="form">
@@ -41,6 +44,7 @@ function showAuth() {
     <button class="btn ghost" data-p="google">G &nbsp;Continue with Google</button>
     <button class="btn ghost" data-p="apple"> &nbsp;Continue with Apple</button>
     <p class="divider" style="margin-top:18px">${reg ? 'Have an account?' : 'New here?'} <a class="link" id="switch">${reg ? 'Sign in' : 'Create account'}</a></p>`;
+  stagger($('#auth'));
   $('#eye').onclick = () => { const p = $('#pw'); p.type = p.type === 'password' ? 'text' : 'password'; };
   $('#switch').onclick = () => { mode = reg ? 'login' : 'register'; showAuth(); };
   if ($('#forgot')) $('#forgot').onclick = () => toast('Password reset needs an email service. See README.');
@@ -84,7 +88,7 @@ async function bioLogin() {
 }
 
 async function enter(user) {
-  me = user; $('#auth').classList.add('hidden'); $('#app').classList.remove('hidden');
+  me = user; shown = null; $('#auth').classList.add('hidden'); $('#app').classList.remove('hidden');
   go(user.devices.length ? 'dashboard' : 'devices');
   if (user.devices.length) startLive(() => ['dashboard', 'insights'].includes(tab) && render(true));
   clearInterval(refreshTimer); refreshTimer = setInterval(() => ['dashboard', 'insights'].includes(tab) && render(true), 30000);
@@ -92,7 +96,7 @@ async function enter(user) {
 
 // ================= NAV =================
 function go(t) {
-  tab = t; $('#tabs').classList.toggle('hidden', t === 'devices');
+  tab = t; $('#tabs').classList.toggle('hidden', t === 'devices'); moveInd(t);
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
   render();
 }
@@ -107,18 +111,18 @@ async function renderDashboard() {
   $('#view').innerHTML = `
     <div class="top"><h1>Dashboard</h1><span class="chip">${dev ? '● ' + esc(dev) : 'No device'}</span></div>
     ${d.syncedAt ? `<div class="sync">✔ Synced ${ago(d.syncedAt)}</div>` : `<div class="card"><b>No device connected</b><p class="muted">Connect a wearable to see live stress, heart rate and sleep.</p><button class="btn" id="goDev">Connect Device</button></div>`}
-    <div class="card"><div class="row"><b>♥ Stress Level</b>${s.value != null ? `<span class="badge">${s.rising ? '↗ Rising' : '↘ Falling'}</span>` : ''}</div>
+    <div class="card"><div class="row"><b><span class="beat">♥</span> Stress Level</b>${s.value != null ? `<span class="badge">${s.rising ? '↗ Rising' : '↘ Falling'}</span>` : ''}</div>
       ${ring(s.value, s.value ?? '--', s.label, s.value != null ? stressColor(s.value) : '#ccc')}
       <div class="note">${esc(s.message)}</div></div>
     <div class="card"><div class="row"><b>◎ Mood Score</b><span class="muted">${d.mood ? ago(d.mood.t) : ''}</span></div>
-      ${d.mood ? `<div class="row" style="margin:10px 0"><span class="emoji">${emoji(d.mood.score)}</span><span class="big" style="color:var(--green)">${d.mood.score}<small class="muted"> out of 10</small></span></div>
+      ${d.mood ? `<div class="row" style="margin:10px 0"><span class="emoji">${emoji(d.mood.score)}</span><span class="big" style="color:var(--green)"><span data-count="${d.mood.score}">${d.mood.score}</span><small class="muted"> out of 10</small></span></div>
       <div class="bar"><i style="width:${d.mood.score * 10}%;background:var(--green)"></i></div>` : '<p class="muted">No mood logged yet.</p>'}
       <button class="btn ghost" id="logMood">◉ Log Today's Mood</button></div>
-    ${d.heart ? `<div class="card"><div class="row"><b>♥ Heart Rate</b><span class="badge">● Live</span></div><div class="muted">24-hour timeline</div>
-      <div class="stats"><div><b style="color:var(--red)">${d.heart.current}</b><small>Current bpm</small></div><div><b>${d.heart.resting}</b><small>Resting bpm</small></div><div><b>${d.heart.max}</b><small>Max today</small></div></div>
+    ${d.heart ? `<div class="card"><div class="row"><b><span class="beat">♥</span> Heart Rate</b><span class="badge pulse">● Live</span></div><div class="muted">24-hour timeline</div>
+      <div class="stats"><div><b style="color:var(--red)" data-count="${d.heart.current}">${d.heart.current}</b><small>Current bpm</small></div><div><b data-count="${d.heart.resting}">${d.heart.resting}</b><small>Resting bpm</small></div><div><b data-count="${d.heart.max}">${d.heart.max}</b><small>Max today</small></div></div>
       ${area(d.heart.series.map(p => p.hr), d.heart.series.map(p => hour(p.t)), { min: 40, max: 160, color: '#b05a5a' })}</div>` : ''}
     ${d.sleep ? `<div class="card"><div class="row"><b>☾ Sleep Quality</b><span class="badge good">${d.sleep.quality >= 80 ? 'Good' : 'Fair'}</span></div>
-      <p class="big">${d.sleep.hours}<small class="muted"> hours</small></p><div class="bar"><i style="width:${d.sleep.quality}%;background:var(--blue)"></i></div>
+      <p class="big"><span data-count="${d.sleep.hours}">${d.sleep.hours}</span><small class="muted"> hours</small></p><div class="bar"><i style="width:${d.sleep.quality}%;background:var(--blue)"></i></div>
       <button class="btn ghost" id="logSleep">Log sleep hours</button></div>` : ''}
     <div class="row"><h2>AI Insights</h2></div>
     ${d.insights.length ? d.insights.map((i, n) => `<div class="insight ${i.priority}" data-a="${i.type}"><div class="row"><b>${esc(i.title)}</b><span class="badge ${i.priority}">${i.priority}</span></div><p>${esc(i.text)}</p><p style="text-align:right;color:var(--blue)">Take Action →</p></div>`).join('') : '<p class="muted">No alerts right now. Nice work.</p>'}`;
@@ -126,6 +130,7 @@ async function renderDashboard() {
   $('#logMood').onclick = logMood;
   if ($('#logSleep')) $('#logSleep').onclick = logSleep;
   document.querySelectorAll('.insight').forEach(el => el.onclick = () => act(el.dataset.a));
+  paint(fresh('dashboard'));
 }
 
 function ask(html, onOk) {
@@ -159,7 +164,7 @@ async function renderInsights() {
     <div class="card"><details open><summary class="row" style="cursor:pointer"><span><b>🔥 Burnout Risk Assessment</b><br><span class="muted">${d.burnout.label}</span></span></summary>
       ${ring(b, b + '%', 'Risk', stressColor(b))}
       <b>24-Hour Predictions</b><div style="margin-top:10px">
-      ${d.predictions.map(p => `<div class="pred"><div class="row"><span>${p.name}</span><b>${p.value}%</b></div><div class="bar"><i style="width:${p.value}%;background:${stressColor(p.value)}"></i></div></div>`).join('')}</div></details></div>
+      ${d.predictions.map(p => `<div class="pred"><div class="row"><span>${p.name}</span><b data-count="${p.value}" data-suf="%">${p.value}%</b></div><div class="bar"><i style="width:${p.value}%;background:${stressColor(p.value)}"></i></div></div>`).join('')}</div></details></div>
     <h2>Weekly Trends</h2>
     <div class="card"><div class="row"><span><b>Stress Pattern Analysis</b><br><span class="muted">Weekly average: ${w.stressAvg}/10</span></span><span class="badge">${arrow(w.stressChange)}</span></div>${area(w.stress, labels)}</div>
     <div class="card"><div class="row"><span><b>Sleep Insights</b><br><span class="muted">Average: ${w.sleepAvg} hours</span></span><span class="badge ${w.sleepChange < 0 ? '' : 'good'}">${arrow(w.sleepChange)}</span></div>${bars(w.sleep, labels, 10)}</div>
@@ -167,6 +172,7 @@ async function renderInsights() {
     ${d.suggestions.map(s => `<div class="card"><div class="sugg"><span class="ic">${ICON[s.type]}</span><div><b>${esc(s.title)}</b><p>${esc(s.text)}</p></div></div>
       <button class="btn ${BTN[s.type][0]}" data-a="${s.type}">${BTN[s.type][1]}</button></div>`).join('')}`;
   document.querySelectorAll('button[data-a]').forEach(b => b.onclick = () => act(b.dataset.a));
+  paint(fresh('insights'));
 }
 
 // ================= ACTIONS: reminders, bedtime, breathing =================
@@ -210,6 +216,7 @@ function renderDevices() {
     ${DEVICES.map(d => { const on = me.devices.includes(d.name); return `<div class="card"><div class="device"><span class="pic">${d.icon}</span><b>${d.name}</b></div>
       <button class="btn ${on ? 'ghost' : ''}" data-d="${d.name}">${on ? '✔ Connected (tap to disconnect)' : '🔗 Connect Device'}</button></div>`; }).join('')}
     <div class="card"><b>Bluetooth heart-rate sensor</b><p class="muted">Use any BLE heart-rate strap/band for real readings (Chrome / Edge).</p><button class="btn sky" id="ble">Pair via Bluetooth</button></div>`;
+  paint(fresh('devices'));
   $('#skip').onclick = () => go('dashboard');
   document.querySelectorAll('[data-d]').forEach(b => b.onclick = async () => {
     const name = b.dataset.d, on = me.devices.includes(name);
@@ -232,7 +239,8 @@ function renderProfile() {
     <div class="card"><b>Security & alerts</b>
       <button class="btn ghost" id="bioBtn">${bio ? '☝ Disable fingerprint login' : '☝ Enable fingerprint login'}</button>
       <button class="btn ghost" id="notif">🔔 Enable notifications</button></div>
-    <button class="btn" style="background:var(--red)" id="out">Sign out</button>`;
+    <button class="btn red" id="out">Sign out</button>`;
+  paint(fresh('profile'));
   $('#mng').onclick = () => go('devices');
   $('#bioBtn').onclick = () => bio ? (localStorage.removeItem('ns_bio'), toast('Fingerprint login disabled'), renderProfile()) : bioEnroll();
   $('#notif').onclick = async () => toast('Notifications: ' + (('Notification' in window) ? await Notification.requestPermission() : 'unsupported'));
@@ -244,4 +252,5 @@ async function boot() {
   if (!getToken()) return showAuth();
   try { enter((await api('/me')).user); } catch { showAuth(); }
 }
+initFx();
 boot();
