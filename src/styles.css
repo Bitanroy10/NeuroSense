@@ -13,3 +13,106 @@
   --surface: #fff;
   --shadow: 0 8px 30px rgba(35, 62, 48, .045);
 }@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
+/* NeuroSense animated wellness background */
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #f4f7f5;
+}
+
+#root {
+  min-height: 100vh;
+  position: relative;
+  isolation: isolate;
+}
+
+#root::before {
+  content: "";
+  position: fixed;
+  inset: -20%;
+  z-index: -1;
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      circle at 20% 25%,
+      rgba(113, 184, 150, 0.22),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 80% 30%,
+      rgba(123, 160, 210, 0.18),
+      transparent 35%
+    ),
+    radial-gradient(
+      circle at 55% 85%,
+      rgba(176, 153, 211, 0.16),
+      transparent 32%
+    );
+
+  background-size: 150% 150%;
+  animation: wellnessFlow 18s ease-in-out infinite alternate;
+}
+
+@keyframes wellnessFlow {
+  0% {
+    background-position: 0% 0%;
+    transform: scale(1);
+  }
+
+  50% {
+    background-position: 70% 40%;
+    transform: scale(1.06);
+  }
+
+  100% {
+    background-position: 100% 100%;
+    transform: scale(1);
+  }
+}
+
+/* Floating ambient light */
+
+.neurosense-glow {
+  position: fixed;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  filter: blur(75px);
+  opacity: 0.25;
+  pointer-events: none;
+  z-index: -1;
+  animation: glowFloat 12s ease-in-out infinite alternate;
+}
+
+.neurosense-glow.glow-one {
+  top: 10%;
+  left: -100px;
+  background: #75bd9b;
+}
+
+.neurosense-glow.glow-two {
+  right: -100px;
+  bottom: 8%;
+  background: #9aabd9;
+  animation-delay: -6s;
+}
+
+@keyframes glowFloat {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(35px, -25px, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root::before,
+  .neurosense-glow {
+    animation: none;
+  }
+}
